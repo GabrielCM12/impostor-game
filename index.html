@@ -60,6 +60,7 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Canvas de Fundo Animado */
@@ -142,7 +143,7 @@
     <canvas id="bgCanvas"></canvas>
 
     <!-- Container Principal estilo App Mobile Glassmorphism -->
-    <main class="w-full max-w-md glass-card rounded-3xl overflow-hidden min-h-[670px] flex flex-col justify-between relative transition-all duration-300">
+    <main class="w-full max-w-md glass-card rounded-3xl overflow-hidden min-h-[670px] flex flex-col justify-between relative transition-all duration-300 my-auto">
         
         <!-- Header Fixo -->
         <header class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-800/80">
@@ -200,22 +201,50 @@
 
                 <hr class="border-slate-800/80">
 
-                <!-- Seção Tema / Categoria -->
+                <!-- Seção Tema / Categoria (Seleção Múltipla) -->
                 <div class="space-y-3">
                     <label class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
-                        <i data-lucide="shapes" class="w-4 h-4 text-cyan-400"></i> Tema da Rodada
+                        <i data-lucide="shapes" class="w-4 h-4 text-cyan-400"></i> Temas (Escolha 1 ou mais)
                     </label>
-                    <select id="selectCategory" class="w-full bg-slate-950/70 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400 transition appearance-none cursor-pointer">
-                        <option value="Geral">🌐 Geral (Variado)</option>
-                        <option value="Comidas">🍕 Comidas & Bebidas</option>
-                        <option value="Objetos">📦 Objetos do Dia a Dia</option>
-                        <option value="Jogos">🎮 Jogos & Games</option>
-                        <option value="Filmes">🎬 Filmes & Séries</option>
-                        <option value="Animes">⛩️ Animes & Desenhos</option>
-                        <option value="Brasil">🇧🇷 Cultura Brasileira</option>
-                        <option value="Profissoes">💼 Profissões & Carreiras</option>
-                        <option value="Custom">✏️ Palavras Personalizadas</option>
-                    </select>
+
+                    <div id="categoriesGrid" class="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto p-1">
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Famosos" class="category-checkbox accent-indigo-500 w-4 h-4 rounded" checked>
+                            <span>⭐ Famosos</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Comidas" class="category-checkbox accent-indigo-500 w-4 h-4 rounded" checked>
+                            <span>🍕 Comidas</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Objetos" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>📦 Objetos</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Jogos" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>🎮 Jogos</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Filmes" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>🎬 Filmes</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Animes" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>⛩️ Animes</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Brasil" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>🇧🇷 Brasil</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold">
+                            <input type="checkbox" value="Profissoes" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>💼 Profissões</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/80 border border-indigo-500/30 p-2.5 rounded-xl cursor-pointer hover:border-cyan-400 transition text-xs font-semibold col-span-2">
+                            <input type="checkbox" value="Custom" id="checkCustomCategory" class="category-checkbox accent-indigo-500 w-4 h-4 rounded">
+                            <span>✏️ Palavras Personalizadas</span>
+                        </label>
+                    </div>
 
                     <!-- Área de palavras customizadas -->
                     <div id="customWordsArea" class="hidden space-y-2 pt-1">
@@ -455,7 +484,7 @@
             });
 
             const particles = [];
-            const particleCount = Math.min(Math.floor(width / 15), 45); // Ajusta para não gastar bateria
+            const particleCount = Math.min(Math.floor(width / 15), 45);
 
             for (let i = 0; i < particleCount; i++) {
                 particles.push({
@@ -498,6 +527,22 @@
 
         // BANCO DE PALAVRAS E DICAS
         const WORD_DATABASE = {
+            Famosos: [
+                { word: "Neymar", hints: ["Futebol", "Camisa 10", "Arábia", "Menino"] },
+                { word: "Virginia Fonseca", hints: ["Base", "Instagram", "Wepink", "Dança"] },
+                { word: "Casimiro", hints: ["CazéTV", "Reação", "Meteu Essa", "Streamer"] },
+                { word: "Anitta", hints: ["Funk", "Internacional", "Envolver", "Pop"] },
+                { word: "Luciano Huck", hints: ["Domingão", "Televisão", "Avião", "Lata Velha"] },
+                { word: "Whindersson Nunes", hints: ["Piauí", "Comédia", "YouTube", "Luta"] },
+                { word: "Felca", hints: ["Vídeo", "Base da Virginia", "Testes", "YouTube"] },
+                { word: "Faustão", hints: ["Ô Loco Meu", "Domingão", "Churrasco", "Relógio"] },
+                { word: "Carlinhos Maia", hints: ["Vila", "Stories", "Alagoas", "Instagram"] },
+                { word: "Blogueirinha", hints: ["Entrevista", "Deboche", "Rosa", "PodDelas"] },
+                { word: "Sabrina Sato", hints: ["Carnaval", "Franja", "Moda", "Risada"] },
+                { word: "Luan Santana", hints: ["Sertanejo", "Meteoro", "Show", "Voz"] },
+                { word: "Alok", hints: ["DJ", "Luzes", "Eletrônica", "Óculos"] },
+                { word: "Tatá Werneck", hints: ["Lady Night", "Comédia", "Rápida", "Televisão"] }
+            ],
             Comidas: [
                 { word: "Pizza", hints: ["Fatia", "Queijo", "Forno", "Massa"] },
                 { word: "Chuva", hints: ["Água", "Molhado", "Nuvem", "Tempestade"] },
@@ -666,7 +711,6 @@
             knowPartner: false,
             hintEnabled: true,
             starterMode: 'random',
-            selectedCategory: 'Geral',
             
             currentRound: {
                 secretWord: '',
@@ -699,7 +743,6 @@
             formAddPlayer: document.getElementById('formAddPlayer'),
             inputPlayerName: document.getElementById('inputPlayerName'),
             playerList: document.getElementById('playerList'),
-            selectCategory: document.getElementById('selectCategory'),
             customWordsArea: document.getElementById('customWordsArea'),
             inputCustomWords: document.getElementById('inputCustomWords'),
             toggleHint: document.getElementById('toggleHint'),
@@ -788,15 +831,17 @@
                 }
             });
 
-            elements.selectCategory.addEventListener('change', (e) => {
-                sound.playClick();
-                state.selectedCategory = e.target.value;
-                if (state.selectedCategory === 'Custom') {
-                    elements.customWordsArea.classList.remove('hidden');
-                } else {
-                    elements.customWordsArea.classList.add('hidden');
-                }
-                updateSetupUI();
+            document.querySelectorAll('.category-checkbox').forEach(chk => {
+                chk.addEventListener('change', () => {
+                    sound.playClick();
+                    const customChecked = document.getElementById('checkCustomCategory').checked;
+                    if (customChecked) {
+                        elements.customWordsArea.classList.remove('hidden');
+                    } else {
+                        elements.customWordsArea.classList.add('hidden');
+                    }
+                    updateSetupUI();
+                });
             });
 
             elements.inputCustomWords.addEventListener('input', updateSetupUI);
@@ -1007,13 +1052,16 @@
             const isMinPlayers = state.players.length >= 3;
             const isValidImpostors = state.numImpostors < state.players.length;
             
+            const selectedCheckboxes = document.querySelectorAll('.category-checkbox:checked');
+            const hasCategorySelected = selectedCheckboxes.length > 0;
+
             let isCustomValid = true;
-            if (state.selectedCategory === 'Custom') {
+            if (document.getElementById('checkCustomCategory').checked) {
                 const customItems = parseCustomWords();
                 isCustomValid = customItems.length > 0;
             }
 
-            const canStart = isMinPlayers && isValidImpostors && isCustomValid;
+            const canStart = isMinPlayers && isValidImpostors && hasCategorySelected && isCustomValid;
 
             if (canStart) {
                 elements.btnStartGame.disabled = false;
@@ -1033,11 +1081,18 @@
 
         function startNewRound() {
             let categoryList = [];
-            if (state.selectedCategory === 'Custom') {
-                categoryList = parseCustomWords();
-                if (categoryList.length === 0) categoryList = WORD_DATABASE.Geral;
-            } else {
-                categoryList = WORD_DATABASE[state.selectedCategory] || WORD_DATABASE.Geral;
+            const checkedValues = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+
+            checkedValues.forEach(cat => {
+                if (cat === 'Custom') {
+                    categoryList = categoryList.concat(parseCustomWords());
+                } else if (WORD_DATABASE[cat]) {
+                    categoryList = categoryList.concat(WORD_DATABASE[cat]);
+                }
+            });
+
+            if (categoryList.length === 0) {
+                categoryList = WORD_DATABASE.Geral;
             }
 
             const selectedItem = categoryList[Math.floor(Math.random() * categoryList.length)];
@@ -1062,7 +1117,6 @@
             state.currentRound = {
                 secretWord,
                 selectedHint: randomHint,
-                category: state.selectedCategory,
                 assignments,
                 currentIndex: 0,
                 starterPlayer,
@@ -1272,7 +1326,7 @@
                 document.head.appendChild(link);
 
                 const swCode = `
-                    const CACHE_NAME = 'impostor-cyber-v2';
+                    const CACHE_NAME = 'impostor-cyber-v4';
                     self.addEventListener('install', (e) => {
                         e.waitUntil(
                             caches.open(CACHE_NAME).then((cache) => {
