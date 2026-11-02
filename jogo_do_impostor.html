@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Impostor - Jogo de Festa</title>
+    
+    <!-- Meta tags para PWA -->
+    <meta name="theme-color" content="#0b0c10">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Impostor">
+    <meta name="description" content="Jogo de festa do Impostor com dicas de palavras e modo offline.">
+
+    <!-- Fontes e Ícones -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- QRCode Lib & Canvas Confetti -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        },
+                        cyber: {
+                            cyan: '#06b6d4',
+                            purple: '#a855f7',
+                            pink: '#ec4899',
+                            glow: '#818cf8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: #080911;
+            color: #f8fafc;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Canvas de Fundo Animado */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Gradiente Vivo Dinâmico */
+        .cyber-bg-gradient {
+            background: linear-gradient(135deg, #090a16 0%, #161032 40%, #0d1b2a 70%, #05060f 100%);
+            background-size: 300% 300%;
+            animation: gradientShift 18s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Efeitos Glow Neon & Glassmorphism */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.12), inset 0 0 15px rgba(255, 255, 255, 0.03);
+        }
+
+        .neon-glow-brand {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .neon-glow-rose {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.4), 0 0 45px rgba(239, 68, 68, 0.15);
+        }
+
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .glow-impostor {
+            background: radial-gradient(circle at 50% 20%, rgba(239, 68, 68, 0.25), transparent 70%);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(8, 9, 17, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 sm:p-6 cyber-bg-gradient font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Canvas de Partículas em Fundo -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Container Principal estilo App Mobile Glassmorphism -->
+    <main class="w-full max-w-md glass-card rounded-3xl overflow-hidden min-h-[670px] flex flex-col justify-between relative transition-all duration-300">
+        
+        <!-- Header Fixo -->
+        <header class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-800/80">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyber-cyan flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i data-lucide="ghost" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-cyan-400">IMPOSTOR</h1>
+                    <p class="text-[10px] text-indigo-300/80 font-bold tracking-widest uppercase">Cyber Edition</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <!-- Botão QR Code de Compartilhamento -->
+                <button id="btnShareQR" title="Compartilhar via QR Code" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-cyan-400 hover:text-white transition-colors active:scale-95 border border-slate-700/50">
+                    <i data-lucide="qr-code" class="w-4 h-4"></i>
+                </button>
+                <!-- Botão Som Mute/Unmute -->
+                <button id="btnToggleSound" title="Alternar Efeitos Sonoros" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-400 hover:text-white transition-colors active:scale-95 border border-slate-700/50">
+                    <i data-lucide="volume-2" id="iconSound" class="w-4 h-4 text-emerald-400"></i>
+                </button>
+                <!-- Botão Reset -->
+                <button id="btnResetApp" title="Reiniciar Configurações" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-400 hover:text-white transition-colors active:scale-95 border border-slate-700/50">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- TELA 1: CONFIGURAÇÃO DO JOGO -->
+        <section id="screenSetup" class="p-6 flex-1 flex flex-col justify-between space-y-6 overflow-y-auto">
+            <div class="space-y-6">
+                <!-- Seção Jogadores -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                            <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i> Jogadores (<span id="playerCount">0</span>)
+                        </label>
+                        <span class="text-[11px] text-slate-400 font-semibold">Mínimo 3</span>
+                    </div>
+
+                    <!-- Input Adicionar Jogador -->
+                    <form id="formAddPlayer" class="flex gap-2">
+                        <input type="text" id="inputPlayerName" placeholder="Nome do jogador..." maxlength="16" required
+                            class="flex-1 bg-slate-950/70 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition shadow-inner">
+                        <button type="submit" class="bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 active:scale-95 text-white px-4 rounded-xl font-bold flex items-center justify-center transition shadow-lg shadow-brand-600/30">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+
+                    <!-- Lista de Jogadores -->
+                    <div id="playerList" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+
+                <hr class="border-slate-800/80">
+
+                <!-- Seção Tema / Categoria -->
+                <div class="space-y-3">
+                    <label class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                        <i data-lucide="shapes" class="w-4 h-4 text-cyan-400"></i> Tema da Rodada
+                    </label>
+                    <select id="selectCategory" class="w-full bg-slate-950/70 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400 transition appearance-none cursor-pointer">
+                        <option value="Geral">🌐 Geral (Variado)</option>
+                        <option value="Comidas">🍕 Comidas & Bebidas</option>
+                        <option value="Objetos">📦 Objetos do Dia a Dia</option>
+                        <option value="Jogos">🎮 Jogos & Games</option>
+                        <option value="Filmes">🎬 Filmes & Séries</option>
+                        <option value="Animes">⛩️ Animes & Desenhos</option>
+                        <option value="Brasil">🇧🇷 Cultura Brasileira</option>
+                        <option value="Profissoes">💼 Profissões & Carreiras</option>
+                        <option value="Custom">✏️ Palavras Personalizadas</option>
+                    </select>
+
+                    <!-- Área de palavras customizadas -->
+                    <div id="customWordsArea" class="hidden space-y-2 pt-1">
+                        <label class="text-[11px] text-slate-400 block">Formato: <code>Palavra: Dica1, Dica2</code> (uma por linha)</label>
+                        <textarea id="inputCustomWords" rows="3" placeholder="Chuva: Água, Molhado, Nuvem&#10;Café: Xícara, Quente, Grão" 
+                            class="w-full bg-slate-950/70 border border-indigo-500/30 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition"></textarea>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800/80">
+
+                <!-- Seção Configurações de Jogo -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                            <i data-lucide="user-x" class="w-4 h-4 text-cyan-400"></i> Impostores
+                        </span>
+                        <div class="flex bg-slate-950/80 rounded-xl p-1 border border-indigo-500/30">
+                            <button type="button" data-impostors="1" class="btn-impostor-count px-4 py-1.5 rounded-lg text-xs font-bold transition bg-brand-600 text-white shadow">1</button>
+                            <button type="button" data-impostors="2" class="btn-impostor-count px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">2</button>
+                        </div>
+                    </div>
+
+                    <!-- Configuração 2 Impostores Conhecem o Parceiro -->
+                    <div id="rowKnowPartner" class="hidden flex items-center justify-between transition-all">
+                        <div>
+                            <span class="text-xs font-bold text-slate-200 block">Impostores se Conhecem</span>
+                            <span class="text-[11px] text-slate-400 block">Exibe quem é o parceiro na carta</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggleKnowPartner" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-950/90 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-200 block">Dica Específica para Impostor</span>
+                            <span class="text-[11px] text-slate-400 block">Exibe uma palavra pista relacionada</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggleHint" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-slate-950/90 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-200 block">Ordem de Fala</span>
+                            <span class="text-[11px] text-slate-400 block">Quem começa o debate</span>
+                        </div>
+                        <select id="selectStarterMode" class="bg-slate-950/80 border border-indigo-500/30 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none">
+                            <option value="random">🎲 Aleatório</option>
+                            <option value="sequence">🔢 Na Ordem</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Iniciar Jogo -->
+            <button id="btnStartGame" disabled class="w-full py-4 bg-slate-800 text-slate-500 font-extrabold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-not-allowed">
+                <span>INICIAR PARTIDA</span>
+                <i data-lucide="play" class="w-5 h-5"></i>
+            </button>
+        </section>
+
+        <!-- TELA 2: PASSE O CELULAR / REVELAR CARTA -->
+        <section id="screenPass" class="hidden p-6 flex-1 flex flex-col justify-between items-center text-center">
+            <div class="w-full space-y-2 mt-2">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Passe o celular para:</span>
+                <h2 id="turnPlayerName" class="text-3xl font-black text-cyan-400 tracking-wide truncate px-4 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]">Nome</h2>
+            </div>
+
+            <!-- Flip Card Container -->
+            <div class="w-full max-w-[280px] h-[360px] perspective-1000 my-4 cursor-pointer group" id="cardContainer">
+                <div id="cardInner" class="w-full h-full transform-style-3d transition-transform duration-700 relative rounded-3xl shadow-2xl">
+                    
+                    <!-- Frente da Carta -->
+                    <div class="absolute inset-0 bg-slate-900/90 border-2 border-indigo-500/40 rounded-3xl p-6 flex flex-col items-center justify-between backface-hidden shadow-2xl neon-glow-brand">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/30">
+                            <i data-lucide="shield-alert" class="w-6 h-6 text-cyan-400"></i>
+                        </div>
+                        <div class="space-y-3">
+                            <i data-lucide="hand" class="w-12 h-12 mx-auto text-indigo-400 animate-bounce"></i>
+                            <p class="text-sm font-bold text-slate-200">Toque na carta para ver seu papel</p>
+                            <p class="text-[11px] text-slate-400">Certifique-se de que ninguém está olhando!</p>
+                        </div>
+                        <div class="text-[10px] uppercase font-black text-indigo-400/80 tracking-widest">Confidencial</div>
+                    </div>
+
+                    <!-- Verso da Carta -->
+                    <div id="cardBack" class="absolute inset-0 bg-slate-900/95 border-2 rounded-3xl p-5 flex flex-col items-center justify-between backface-hidden rotate-y-180 shadow-2xl">
+                        <div id="roleBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider">
+                            <!-- Papel -->
+                        </div>
+
+                        <div class="space-y-2 my-auto w-full px-2">
+                            <span class="text-xs font-medium text-slate-400 uppercase tracking-widest block" id="cardSubTitle">SUA PALAVRA É:</span>
+                            <h3 id="cardSecretWord" class="text-2xl font-black text-white break-words leading-tight">...</h3>
+                            
+                            <div id="cardHintContainer" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 mt-2">
+                                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">💡 Dica Relacionada:</span>
+                                <p id="cardHint" class="text-sm text-amber-300 font-bold italic mt-0.5"></p>
+                            </div>
+
+                            <div id="cardPartnerContainer" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-xl p-2 mt-2">
+                                <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">🤝 Seu Parceiro Impostor:</span>
+                                <p id="cardPartnerName" class="text-xs text-rose-300 font-extrabold mt-0.5"></p>
+                            </div>
+                        </div>
+
+                        <div class="text-[11px] text-slate-400 font-medium">Memorize seu papel e não desvele</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Botão Próximo Jogador -->
+            <button id="btnNextTurn" class="w-full py-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl transition shadow-lg shadow-brand-600/40 flex items-center justify-center gap-2 active:scale-95 invisible opacity-0 transition-all duration-300">
+                <span id="btnNextTurnText">PRÓXIMO JOGADOR</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </section>
+
+        <!-- TELA 3: DEBATE & VOTAÇÃO -->
+        <section id="screenDiscussion" class="hidden p-6 flex-1 flex flex-col justify-between items-center text-center space-y-6">
+            <div class="space-y-2 mt-2 w-full">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Hora de Conversar!</span>
+                <h2 class="text-2xl font-black text-white">Debate & Votação</h2>
+            </div>
+
+            <!-- Quem Começa -->
+            <div class="w-full bg-slate-950/60 border border-indigo-500/30 rounded-2xl p-4 flex items-center gap-4 text-left">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                    <i data-lucide="mic" class="w-6 h-6 text-amber-400"></i>
+                </div>
+                <div>
+                    <span class="text-[11px] uppercase font-bold text-amber-400 tracking-wider">Quem começa falando:</span>
+                    <p id="starterPlayerName" class="text-lg font-bold text-white truncate">Nome</p>
+                </div>
+            </div>
+
+            <!-- Cronômetro Digital -->
+            <div class="w-full bg-slate-950/60 border border-indigo-500/30 rounded-3xl p-6 flex flex-col items-center justify-center space-y-4">
+                <div id="timerDisplay" class="text-5xl font-black font-mono tracking-wider text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]">
+                    02:00
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <button id="btnTimerToggle" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center gap-2 border border-indigo-500/30 transition">
+                        <i data-lucide="play" id="iconTimerPlay" class="w-4 h-4"></i>
+                        <span id="labelTimerPlay">Iniciar Timer</span>
+                    </button>
+                    <button id="btnTimerReset" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs border border-indigo-500/30 transition">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botão Revelar Resultado -->
+            <div class="w-full space-y-3">
+                <button id="btnRevealImpostor" class="w-full py-4 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold rounded-2xl transition shadow-lg shadow-rose-600/40 flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="eye" class="w-5 h-5"></i>
+                    <span>REVELAR RESULTADO</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- TELA 4: RESULTADO FINAL -->
+        <section id="screenResult" class="hidden p-6 flex-1 flex flex-col justify-between items-center text-center space-y-6">
+            <div class="space-y-1 mt-2">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Fim da Rodada</span>
+                <h2 class="text-2xl font-black text-white">Resultado Final</h2>
+            </div>
+
+            <div class="w-full bg-slate-950/70 border border-indigo-500/40 rounded-2xl p-5 space-y-1">
+                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">A palavra secreta era:</span>
+                <h3 id="resultWord" class="text-3xl font-black text-cyan-400 uppercase tracking-wide drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">...</h3>
+            </div>
+
+            <div class="w-full space-y-3">
+                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider block text-left px-1">
+                    Impostor(es) da Rodada:
+                </span>
+                <div id="resultImpostorsList" class="space-y-2">
+                    <!-- Renderizado JS -->
+                </div>
+            </div>
+
+            <div class="w-full space-y-2.5">
+                <button id="btnPlayAgain" class="w-full py-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl transition shadow-lg shadow-brand-600/40 flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+                    <span>JOGAR NOVAMENTE</span>
+                </button>
+                <button id="btnBackToSetup" class="w-full py-3 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl transition text-sm border border-slate-700/50">
+                    Alterar Configurações
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DO QR CODE PARA COMPARTILHAR -->
+    <div id="modalQR" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl relative">
+            <button id="btnCloseQR" class="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <div class="space-y-1">
+                <h3 class="font-extrabold text-lg text-white">Abra no Celular</h3>
+                <p class="text-xs text-slate-400">Escaneie o QR Code abaixo para abrir o jogo diretamente:</p>
+            </div>
+            
+            <div class="bg-white p-4 rounded-2xl flex justify-center items-center mx-auto shadow-inner w-48 h-48" id="qrcodeContainer"></div>
+
+            <button id="btnCopyLink" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 border border-slate-700/50">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span id="btnCopyLinkText">Copiar Link do Jogo</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- BANCO DE PALAVRAS E SISTEMAS SCRIPT -->
+    <script>
+        // BACKGROUND CANVAS ANIMATION (Partículas Neons Flutuantes)
+        (function initBgAnimation() {
+            const canvas = document.getElementById('bgCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = [];
+            const particleCount = Math.min(Math.floor(width / 15), 45); // Ajusta para não gastar bateria
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 2 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    alpha: Math.random() * 0.6 + 0.2,
+                    color: Math.random() > 0.5 ? '#6366f1' : '#06b6d4'
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = p.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+
+        // BANCO DE PALAVRAS E DICAS
+        const WORD_DATABASE = {
+            Comidas: [
+                { word: "Pizza", hints: ["Fatia", "Queijo", "Forno", "Massa"] },
+                { word: "Chuva", hints: ["Água", "Molhado", "Nuvem", "Tempestade"] },
+                { word: "Hambúrguer", hints: ["Pão", "Carne", "Lanche", "Fritas"] },
+                { word: "Sushi", hints: ["Peixe Cru", "Arroz", "Alga", "Japonês"] },
+                { word: "Sorvete", hints: ["Gelado", "Casquinha", "Sobremesa", "Verão"] },
+                { word: "Chocolate", hints: ["Cacau", "Doce", "Ao Leite", "Barra"] },
+                { word: "Feijoada", hints: ["Feijão Preto", "Porco", "Couve", "Sábado"] },
+                { word: "Pão de Queijo", hints: ["Minas", "Polvilho", "Quentinho", "Café"] }
+            ],
+            Objetos: [
+                { word: "Celular", hints: ["Tela", "Bateria", "Chamada", "Aplicativos"] },
+                { word: "Relógio", hints: ["Ponteiros", "Horas", "Pulso", "Tempo"] },
+                { word: "Tesoura", hints: ["Cortar", "Lâmina", "Papel", "Artesanato"] },
+                { word: "Guarda-chuva", hints: ["Proteção", "Chuva", "Dobrável", "Vento"] },
+                { word: "Óculos", hints: ["Lentes", "Visão", "Armação", "Olhos"] },
+                { word: "Espelho", hints: ["Reflexo", "Vidro", "Imagem", "Parede"] },
+                { word: "Cadeira", hints: ["Sentar", "Móvel", "Encosto", "Pés"] }
+            ],
+            Jogos: [
+                { word: "Minecraft", hints: ["Blocos", "Criação", "Creeper", "Mineração"] },
+                { word: "Tetris", hints: ["Encaixe", "Linhas", "Formas", "Clássico"] },
+                { word: "GTA", hints: ["Carros", "Cidade", "Missões", "Mundo Aberto"] },
+                { word: "FIFA", hints: ["Futebol", "Golo", "Campo", "Times"] },
+                { word: "Mario Kart", hints: ["Corrida", "Casco", "Pista", "Moedas"] },
+                { word: "Pokemon", hints: ["Capturar", "Monstros", "Insígnias", "Evolução"] }
+            ],
+            Filmes: [
+                { word: "Titanic", hints: ["Navio", "Iceberg", "Oceano", "Naufrágio"] },
+                { word: "Matrix", hints: ["Pílula", "Realidade", "Código", "Neo"] },
+                { word: "Star Wars", hints: ["Espada de Luz", "Espaço", "Força", "Galáxia"] },
+                { word: "Harry Potter", hints: ["Magia", "Varinha", "Escola", "Bruxo"] },
+                { word: "Jurassic Park", hints: ["Dinos", "Ilha", "Parque", "Fósseis"] }
+            ],
+            Animes: [
+                { word: "Naruto", hints: ["Ninja", "Jutsu", "Aldeia", "Raposa"] },
+                { word: "Dragon Ball Z", hints: ["Esferas", "Saiyajin", "Kamehameha", "Luta"] },
+                { word: "One Piece", hints: ["Pirata", "Tesouro", "Mar", "Barco"] },
+                { word: "Death Note", hints: ["Caderno", "Nomes", "Detetive", "Maçã"] }
+            ],
+            Brasil: [
+                { word: "Carnaval", hints: ["Fantasia", "Samba", "Bloco", "Fevereiro"] },
+                { word: "Cristo Redentor", hints: ["Estátua", "Rio de Janeiro", "Morro", "Braços Abertos"] },
+                { word: "Caipirinha", hints: ["Limão", "Cachaça", "Gelo", "Açúcar"] },
+                { word: "Maracanã", hints: ["Estádio", "Futebol", "Torcida", "Gramado"] }
+            ],
+            Profissoes: [
+                { word: "Astronauta", hints: ["Espaço", "Foguete", "Gravidade", "Traje"] },
+                { word: "Médico", hints: ["Hospital", "Saúde", "Remédio", "Consulta"] },
+                { word: "Bombeiro", hints: ["Fogo", "Sirene", "Água", "Resgate"] },
+                { word: "Professor", hints: ["Escola", "Aula", "Quadro", "Alunos"] }
+            ]
+        };
+
+        WORD_DATABASE.Geral = Object.values(WORD_DATABASE).flat();
+
+        // GERADOR DE ÁUDIO VIA WEB AUDIO API
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+            }
+
+            playClick() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            playFlip() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.2);
+
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+
+            playAlarm() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                for (let i = 0; i < 3; i++) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    const startTime = this.ctx.currentTime + (i * 0.15);
+                    osc.frequency.setValueAtTime(880, startTime);
+
+                    gain.gain.setValueAtTime(0.1, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.1);
+                }
+            }
+
+            playFanfare() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const startTime = this.ctx.currentTime + (idx * 0.1);
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, startTime);
+
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.4);
+                });
+            }
+        }
+
+        const sound = new SoundEffects();
+
+        // ESTADO GLOBAL DA APLICAÇÃO
+        const state = {
+            players: [],
+            numImpostors: 1,
+            knowPartner: false,
+            hintEnabled: true,
+            starterMode: 'random',
+            selectedCategory: 'Geral',
+            
+            currentRound: {
+                secretWord: '',
+                selectedHint: '',
+                category: '',
+                assignments: [],
+                currentIndex: 0,
+                starterPlayer: '',
+                impostors: []
+            },
+
+            timer: {
+                interval: null,
+                totalSeconds: 120,
+                currentSeconds: 120,
+                isRunning: false
+            }
+        };
+
+        // ELEMENTOS DOM
+        const screens = {
+            setup: document.getElementById('screenSetup'),
+            pass: document.getElementById('screenPass'),
+            discussion: document.getElementById('screenDiscussion'),
+            result: document.getElementById('screenResult')
+        };
+
+        const elements = {
+            playerCount: document.getElementById('playerCount'),
+            formAddPlayer: document.getElementById('formAddPlayer'),
+            inputPlayerName: document.getElementById('inputPlayerName'),
+            playerList: document.getElementById('playerList'),
+            selectCategory: document.getElementById('selectCategory'),
+            customWordsArea: document.getElementById('customWordsArea'),
+            inputCustomWords: document.getElementById('inputCustomWords'),
+            toggleHint: document.getElementById('toggleHint'),
+            rowKnowPartner: document.getElementById('rowKnowPartner'),
+            toggleKnowPartner: document.getElementById('toggleKnowPartner'),
+            selectStarterMode: document.getElementById('selectStarterMode'),
+            btnStartGame: document.getElementById('btnStartGame'),
+            btnResetApp: document.getElementById('btnResetApp'),
+            btnToggleSound: document.getElementById('btnToggleSound'),
+            iconSound: document.getElementById('iconSound'),
+            btnShareQR: document.getElementById('btnShareQR'),
+            modalQR: document.getElementById('modalQR'),
+            btnCloseQR: document.getElementById('btnCloseQR'),
+            btnCopyLink: document.getElementById('btnCopyLink'),
+            btnCopyLinkText: document.getElementById('btnCopyLinkText'),
+            qrcodeContainer: document.getElementById('qrcodeContainer'),
+            btnImpostorCounts: document.querySelectorAll('.btn-impostor-count'),
+
+            // Pass Screen
+            turnPlayerName: document.getElementById('turnPlayerName'),
+            cardContainer: document.getElementById('cardContainer'),
+            cardInner: document.getElementById('cardInner'),
+            cardBack: document.getElementById('cardBack'),
+            roleBadge: document.getElementById('roleBadge'),
+            cardSubTitle: document.getElementById('cardSubTitle'),
+            cardSecretWord: document.getElementById('cardSecretWord'),
+            cardHintContainer: document.getElementById('cardHintContainer'),
+            cardHint: document.getElementById('cardHint'),
+            cardPartnerContainer: document.getElementById('cardPartnerContainer'),
+            cardPartnerName: document.getElementById('cardPartnerName'),
+            btnNextTurn: document.getElementById('btnNextTurn'),
+            btnNextTurnText: document.getElementById('btnNextTurnText'),
+
+            // Discussion Screen
+            starterPlayerName: document.getElementById('starterPlayerName'),
+            timerDisplay: document.getElementById('timerDisplay'),
+            btnTimerToggle: document.getElementById('btnTimerToggle'),
+            labelTimerPlay: document.getElementById('labelTimerPlay'),
+            iconTimerPlay: document.getElementById('iconTimerPlay'),
+            btnTimerReset: document.getElementById('btnTimerReset'),
+            btnRevealImpostor: document.getElementById('btnRevealImpostor'),
+
+            // Result Screen
+            resultWord: document.getElementById('resultWord'),
+            resultImpostorsList: document.getElementById('resultImpostorsList'),
+            btnPlayAgain: document.getElementById('btnPlayAgain'),
+            btnBackToSetup: document.getElementById('btnBackToSetup')
+        };
+
+        // INICIALIZAÇÃO
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedPlayers();
+            lucide.createIcons();
+            setupEventListeners();
+            updateSetupUI();
+            registerPWA();
+        });
+
+        function loadSavedPlayers() {
+            const saved = localStorage.getItem('impostor_players');
+            if (saved) {
+                try {
+                    state.players = JSON.parse(saved);
+                } catch (e) {
+                    state.players = ["Lucas", "Mariana", "Gabriel"];
+                }
+            } else {
+                state.players = ["Lucas", "Mariana", "Gabriel"];
+            }
+        }
+
+        function savePlayers() {
+            localStorage.setItem('impostor_players', JSON.stringify(state.players));
+        }
+
+        function setupEventListeners() {
+            elements.formAddPlayer.addEventListener('submit', (e) => {
+                e.preventDefault();
+                sound.playClick();
+                const name = elements.inputPlayerName.value.trim();
+                if (name && !state.players.includes(name)) {
+                    state.players.push(name);
+                    savePlayers();
+                    elements.inputPlayerName.value = '';
+                    updateSetupUI();
+                }
+            });
+
+            elements.selectCategory.addEventListener('change', (e) => {
+                sound.playClick();
+                state.selectedCategory = e.target.value;
+                if (state.selectedCategory === 'Custom') {
+                    elements.customWordsArea.classList.remove('hidden');
+                } else {
+                    elements.customWordsArea.classList.add('hidden');
+                }
+                updateSetupUI();
+            });
+
+            elements.inputCustomWords.addEventListener('input', updateSetupUI);
+
+            elements.btnImpostorCounts.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sound.playClick();
+                    const count = parseInt(btn.dataset.impostors);
+                    state.numImpostors = count;
+
+                    if (count === 2) {
+                        elements.rowKnowPartner.classList.remove('hidden');
+                    } else {
+                        elements.rowKnowPartner.classList.add('hidden');
+                        state.knowPartner = false;
+                        elements.toggleKnowPartner.checked = false;
+                    }
+
+                    elements.btnImpostorCounts.forEach(b => {
+                        if (parseInt(b.dataset.impostors) === count) {
+                            b.className = 'btn-impostor-count px-4 py-1.5 rounded-lg text-xs font-bold transition bg-brand-600 text-white shadow';
+                        } else {
+                            b.className = 'btn-impostor-count px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
+                        }
+                    });
+                    updateSetupUI();
+                });
+            });
+
+            elements.toggleKnowPartner.addEventListener('change', (e) => {
+                sound.playClick();
+                state.knowPartner = e.target.checked;
+            });
+
+            elements.toggleHint.addEventListener('change', (e) => {
+                sound.playClick();
+                state.hintEnabled = e.target.checked;
+            });
+
+            elements.selectStarterMode.addEventListener('change', (e) => {
+                sound.playClick();
+                state.starterMode = e.target.value;
+            });
+
+            elements.btnToggleSound.addEventListener('click', () => {
+                sound.muted = !sound.muted;
+                if (sound.muted) {
+                    elements.iconSound.setAttribute('data-lucide', 'volume-x');
+                    elements.iconSound.className = 'w-4 h-4 text-rose-400';
+                } else {
+                    sound.playClick();
+                    elements.iconSound.setAttribute('data-lucide', 'volume-2');
+                    elements.iconSound.className = 'w-4 h-4 text-emerald-400';
+                }
+                lucide.createIcons();
+            });
+
+            elements.btnResetApp.addEventListener('click', () => {
+                sound.playClick();
+                if (confirm('Deseja redefinir a lista de jogadores e configurações?')) {
+                    localStorage.removeItem('impostor_players');
+                    state.players = ["Lucas", "Mariana", "Gabriel"];
+                    updateSetupUI();
+                    showScreen('setup');
+                }
+            });
+
+            // Compartilhamento por QR Code
+            let qrGenerated = false;
+            elements.btnShareQR.addEventListener('click', () => {
+                sound.playClick();
+                elements.modalQR.classList.remove('hidden');
+                setTimeout(() => elements.modalQR.classList.remove('opacity-0'), 10);
+                
+                if (!qrGenerated) {
+                    elements.qrcodeContainer.innerHTML = '';
+                    new QRCode(elements.qrcodeContainer, {
+                        text: window.location.href,
+                        width: 160,
+                        height: 160,
+                        colorDark: "#080911",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    qrGenerated = true;
+                }
+            });
+
+            elements.btnCloseQR.addEventListener('click', () => {
+                sound.playClick();
+                elements.modalQR.classList.add('opacity-0');
+                setTimeout(() => elements.modalQR.classList.add('hidden'), 300);
+            });
+
+            elements.btnCopyLink.addEventListener('click', () => {
+                sound.playClick();
+                const url = window.location.href;
+                const tempInput = document.createElement('input');
+                tempInput.value = url;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                elements.btnCopyLinkText.textContent = 'Link Copiado!';
+                setTimeout(() => {
+                    elements.btnCopyLinkText.textContent = 'Copiar Link do Jogo';
+                }, 2000);
+            });
+
+            elements.btnStartGame.addEventListener('click', () => {
+                sound.playClick();
+                startNewRound();
+            });
+
+            // Revelação da carta (Uma única virada sem possibilidade de desvirar)
+            let isFlipped = false;
+            elements.cardContainer.addEventListener('click', () => {
+                if (!isFlipped) {
+                    isFlipped = true;
+                    sound.playFlip();
+                    elements.cardInner.classList.add('rotate-y-180');
+                    elements.btnNextTurn.classList.remove('invisible', 'opacity-0');
+                }
+            });
+
+            elements.btnNextTurn.addEventListener('click', () => {
+                if (isFlipped) {
+                    sound.playClick();
+                    elements.cardInner.classList.remove('rotate-y-180');
+                    elements.btnNextTurn.classList.add('invisible', 'opacity-0');
+                    isFlipped = false;
+                    setTimeout(advanceTurn, 300);
+                }
+            });
+
+            elements.btnTimerToggle.addEventListener('click', () => {
+                sound.playClick();
+                toggleTimer();
+            });
+            
+            elements.btnTimerReset.addEventListener('click', () => {
+                sound.playClick();
+                resetTimer();
+            });
+
+            elements.btnRevealImpostor.addEventListener('click', () => {
+                sound.playFanfare();
+                triggerConfetti();
+                stopTimer();
+                showScreen('result');
+            });
+
+            elements.btnPlayAgain.addEventListener('click', () => {
+                sound.playClick();
+                startNewRound();
+            });
+            
+            elements.btnBackToSetup.addEventListener('click', () => {
+                sound.playClick();
+                showScreen('setup');
+            });
+        }
+
+        function parseCustomWords() {
+            const raw = elements.inputCustomWords.value.trim();
+            if (!raw) return [];
+
+            const lines = raw.split('\n');
+            const result = [];
+
+            lines.forEach(line => {
+                if (line.includes(':')) {
+                    const [wordPart, hintsPart] = line.split(':');
+                    const word = wordPart.trim();
+                    const hints = hintsPart.split(',').map(h => h.trim()).filter(h => h.length > 0);
+                    if (word && hints.length > 0) {
+                        result.push({ word, hints });
+                    }
+                } else {
+                    const word = line.trim();
+                    if (word) {
+                        result.push({ word, hints: ["Sem dica específica"] });
+                    }
+                }
+            });
+
+            return result;
+        }
+
+        function updateSetupUI() {
+            elements.playerList.innerHTML = '';
+            state.players.forEach((player, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'flex items-center gap-1.5 bg-slate-950/70 border border-indigo-500/30 px-3 py-1.5 rounded-xl text-xs text-white font-medium group shadow';
+                tag.innerHTML = `
+                    <span>${escapeHtml(player)}</span>
+                    <button onclick="removePlayer(${index})" class="text-slate-500 hover:text-rose-400 transition">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                `;
+                elements.playerList.appendChild(tag);
+            });
+            lucide.createIcons();
+
+            elements.playerCount.textContent = state.players.length;
+
+            const isMinPlayers = state.players.length >= 3;
+            const isValidImpostors = state.numImpostors < state.players.length;
+            
+            let isCustomValid = true;
+            if (state.selectedCategory === 'Custom') {
+                const customItems = parseCustomWords();
+                isCustomValid = customItems.length > 0;
+            }
+
+            const canStart = isMinPlayers && isValidImpostors && isCustomValid;
+
+            if (canStart) {
+                elements.btnStartGame.disabled = false;
+                elements.btnStartGame.className = 'w-full py-4 bg-gradient-to-r from-brand-600 via-indigo-600 to-cyber-cyan hover:brightness-110 active:scale-95 text-white font-extrabold rounded-2xl transition-all shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 cursor-pointer';
+            } else {
+                elements.btnStartGame.disabled = true;
+                elements.btnStartGame.className = 'w-full py-4 bg-slate-800/80 text-slate-500 font-extrabold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-not-allowed opacity-60';
+            }
+        }
+
+        function removePlayer(index) {
+            sound.playClick();
+            state.players.splice(index, 1);
+            savePlayers();
+            updateSetupUI();
+        }
+
+        function startNewRound() {
+            let categoryList = [];
+            if (state.selectedCategory === 'Custom') {
+                categoryList = parseCustomWords();
+                if (categoryList.length === 0) categoryList = WORD_DATABASE.Geral;
+            } else {
+                categoryList = WORD_DATABASE[state.selectedCategory] || WORD_DATABASE.Geral;
+            }
+
+            const selectedItem = categoryList[Math.floor(Math.random() * categoryList.length)];
+            const secretWord = selectedItem.word;
+            const randomHint = selectedItem.hints[Math.floor(Math.random() * selectedItem.hints.length)];
+            
+            const shuffledPlayers = [...state.players].sort(() => Math.random() - 0.5);
+            const impostors = shuffledPlayers.slice(0, state.numImpostors);
+
+            const assignments = state.players.map(player => ({
+                name: player,
+                isImpostor: impostors.includes(player)
+            }));
+
+            let starterPlayer = '';
+            if (state.starterMode === 'random') {
+                starterPlayer = state.players[Math.floor(Math.random() * state.players.length)];
+            } else {
+                starterPlayer = state.players[0];
+            }
+
+            state.currentRound = {
+                secretWord,
+                selectedHint: randomHint,
+                category: state.selectedCategory,
+                assignments,
+                currentIndex: 0,
+                starterPlayer,
+                impostors
+            };
+
+            setupTurnUI();
+            showScreen('pass');
+        }
+
+        function setupTurnUI() {
+            const current = state.currentRound.assignments[state.currentRound.currentIndex];
+            elements.turnPlayerName.textContent = current.name;
+
+            const total = state.currentRound.assignments.length;
+            const isLast = state.currentRound.currentIndex === total - 1;
+
+            elements.btnNextTurnText.textContent = isLast ? 'INICIAR DEBATE' : 'PRÓXIMO JOGADOR';
+
+            if (current.isImpostor) {
+                elements.cardBack.className = 'absolute inset-0 bg-slate-950 border-2 border-rose-600 rounded-3xl p-5 flex flex-col items-center justify-between backface-hidden rotate-y-180 shadow-2xl neon-glow-rose glow-impostor';
+                
+                elements.roleBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/40';
+                elements.roleBadge.textContent = '🤫 VOCÊ É O IMPOSTOR';
+
+                elements.cardSubTitle.textContent = 'SEU OBJETIVO:';
+                elements.cardSecretWord.textContent = 'DISFARÇAR';
+                elements.cardSecretWord.className = 'text-2xl font-black text-rose-500 tracking-wide';
+
+                // Dica
+                if (state.hintEnabled) {
+                    elements.cardHint.textContent = `"${state.currentRound.selectedHint}"`;
+                    elements.cardHintContainer.classList.remove('hidden');
+                } else {
+                    elements.cardHintContainer.classList.add('hidden');
+                }
+
+                // Exibe parceiro se a opção estiver ativa
+                if (state.numImpostors === 2 && state.knowPartner) {
+                    const partner = state.currentRound.impostors.find(name => name !== current.name);
+                    if (partner) {
+                        elements.cardPartnerName.textContent = partner;
+                        elements.cardPartnerContainer.classList.remove('hidden');
+                    } else {
+                        elements.cardPartnerContainer.classList.add('hidden');
+                    }
+                } else {
+                    elements.cardPartnerContainer.classList.add('hidden');
+                }
+
+            } else {
+                elements.cardBack.className = 'absolute inset-0 bg-slate-950 border-2 border-cyan-500/80 rounded-3xl p-5 flex flex-col items-center justify-between backface-hidden rotate-y-180 shadow-2xl neon-glow-brand';
+                
+                elements.roleBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+                elements.roleBadge.textContent = 'SECRETO';
+
+                elements.cardSubTitle.textContent = 'SUA PALAVRA É:';
+                elements.cardSecretWord.textContent = state.currentRound.secretWord;
+                elements.cardSecretWord.className = 'text-3xl font-black text-white tracking-wide break-words';
+                elements.cardHintContainer.classList.add('hidden');
+                elements.cardPartnerContainer.classList.add('hidden');
+            }
+        }
+
+        function advanceTurn() {
+            state.currentRound.currentIndex++;
+            if (state.currentRound.currentIndex < state.currentRound.assignments.length) {
+                setupTurnUI();
+            } else {
+                setupDiscussionUI();
+                showScreen('discussion');
+            }
+        }
+
+        function setupDiscussionUI() {
+            elements.starterPlayerName.textContent = state.currentRound.starterPlayer;
+            resetTimer();
+            setupResultUI();
+        }
+
+        function setupResultUI() {
+            elements.resultWord.textContent = state.currentRound.secretWord;
+            elements.resultImpostorsList.innerHTML = '';
+
+            state.currentRound.impostors.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'w-full bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5 flex items-center justify-between text-rose-400 font-bold text-sm shadow';
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="ghost" class="w-4 h-4"></i>
+                        <span>${escapeHtml(name)}</span>
+                    </div>
+                    <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/30">Impostor</span>
+                `;
+                elements.resultImpostorsList.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        // TIMER DIGITAL
+        function toggleTimer() {
+            if (state.timer.isRunning) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            state.timer.isRunning = true;
+            elements.labelTimerPlay.textContent = 'Pausar';
+            elements.iconTimerPlay.setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+
+            state.timer.interval = setInterval(() => {
+                if (state.timer.currentSeconds > 0) {
+                    state.timer.currentSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    sound.playAlarm();
+                    stopTimer();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            state.timer.isRunning = false;
+            clearInterval(state.timer.interval);
+            elements.labelTimerPlay.textContent = 'Iniciar Timer';
+            elements.iconTimerPlay.setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+        }
+
+        function resetTimer() {
+            stopTimer();
+            state.timer.currentSeconds = state.timer.totalSeconds;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(state.timer.currentSeconds / 60);
+            const secs = state.timer.currentSeconds % 60;
+            elements.timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 90,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function showScreen(screenKey) {
+            Object.keys(screens).forEach(key => {
+                if (key === screenKey) {
+                    screens[key].classList.remove('hidden');
+                } else {
+                    screens[key].classList.add('hidden');
+                }
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        // REGISTRO DE SERVICE WORKER E MANIFEST DINÂMICOS (PWA AUTOMÁTICO VIA BLOB)
+        function registerPWA() {
+            if ('serviceWorker' in navigator) {
+                const manifestJSON = {
+                    name: "Impostor Jogo de Festa",
+                    short_name: "Impostor",
+                    start_url: "./",
+                    display: "standalone",
+                    background_color: "#080911",
+                    theme_color: "#080911",
+                    icons: [
+                        {
+                            src: "https://api.iconify.design/lucide:ghost.svg?color=%236366f1&width=192&height=192",
+                            sizes: "192x192",
+                            type: "image/svg+xml"
+                        },
+                        {
+                            src: "https://api.iconify.design/lucide:ghost.svg?color=%236366f1&width=512&height=512",
+                            sizes: "512x512",
+                            type: "image/svg+xml"
+                        }
+                    ]
+                };
+
+                const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/json' });
+                const manifestURL = URL.createObjectURL(manifestBlob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+
+                const swCode = `
+                    const CACHE_NAME = 'impostor-cyber-v2';
+                    self.addEventListener('install', (e) => {
+                        e.waitUntil(
+                            caches.open(CACHE_NAME).then((cache) => {
+                                return cache.addAll(['./']);
+                            })
+                        );
+                    });
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            caches.match(e.request).then((response) => {
+                                return response || fetch(e.request);
+                            })
+                        );
+                    });
+                `;
+
+                const swBlob = new Blob([swCode], { type: 'text/javascript' });
+                const swURL = URL.createObjectURL(swBlob);
+
+                navigator.serviceWorker.register(swURL).catch(() => {});
+            }
+        }
+    </script>
+</body>
+</html>
